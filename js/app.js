@@ -33,54 +33,61 @@ class QRDataBuilder {
     );
   }
 
-  // One method supports all three QR types.
+  // Ask the correct builder method for the selected mode.
+  // Each method below has one clear job, which is easier to explain and test.
   build(mode, fields) {
-    if (mode === 'link') {
-      const urlText = fields.linkUrl.trim();
-      if (!urlText) return { error: 'Enter a link to make a QR code.' };
-      const url = this.safeUrl(urlText);
-      if (!url) return { error: 'Use a complete http:// or https:// link.' };
-      return {
-        payload: url,
-        title: fields.linkTitle.trim() || 'Your website',
-        subtitle: url
-      };
-    }
-
-    if (mode === 'class') {
-      const urlText = fields.classUrl.trim();
-      if (!urlText) return { error: 'Paste a class registration form link.' };
-      const url = this.safeUrl(urlText);
-      if (!url) return { error: 'Use a complete http:// or https:// form link.' };
-      return {
-        payload: url,
-        title: fields.classTitle.trim() || 'Class sign-up',
-        subtitle: 'Scan to open the registration form'
-      };
-    }
-
-    if (mode === 'wifi') {
-      if (!fields.wifiSsid) return { error: 'Enter a Wi-Fi network name.' };
-      if (fields.wifiSecurity !== 'nopass' && !fields.wifiPassword) {
-        return { error: 'Enter the Wi-Fi password.' };
-      }
-
-      const password = fields.wifiSecurity === 'nopass'
-        ? '' : this.escapeWifi(fields.wifiPassword);
-      const hidden = fields.wifiHidden ? 'true' : 'false';
-      const payload = 'WIFI:T:' + fields.wifiSecurity
-        + ';S:' + this.escapeWifi(fields.wifiSsid)
-        + ';P:' + password + ';H:' + hidden + ';;';
-
-      return {
-        payload,
-        title: fields.wifiSsid,
-        subtitle: fields.wifiSecurity === 'nopass'
-          ? 'Open Wi-Fi network' : 'Scan to join Wi-Fi'
-      };
-    }
-
+    if (mode === 'link') return this.buildLink(fields);
+    if (mode === 'wifi') return this.buildWifi(fields);
+    if (mode === 'class') return this.buildClass(fields);
     return { error: 'Select a QR code type.' };
+  }
+
+  // Link mode: turn a web address into QR data.
+  buildLink(fields) {
+    const urlText = fields.linkUrl.trim();
+    if (!urlText) return { error: 'Enter a link to make a QR code.' };
+    const url = this.safeUrl(urlText);
+    if (!url) return { error: 'Use a complete http:// or https:// link.' };
+    return {
+      payload: url,
+      title: fields.linkTitle.trim() || 'Your website',
+      subtitle: url
+    };
+  }
+
+  // Wi-Fi mode: use the special WIFI: text format that phones understand.
+  buildWifi(fields) {
+    if (!fields.wifiSsid) return { error: 'Enter a Wi-Fi network name.' };
+    if (fields.wifiSecurity !== 'nopass' && !fields.wifiPassword) {
+      return { error: 'Enter the Wi-Fi password.' };
+    }
+
+    const password = fields.wifiSecurity === 'nopass'
+      ? '' : this.escapeWifi(fields.wifiPassword);
+    const hidden = fields.wifiHidden ? 'true' : 'false';
+    const payload = 'WIFI:T:' + fields.wifiSecurity
+      + ';S:' + this.escapeWifi(fields.wifiSsid)
+      + ';P:' + password + ';H:' + hidden + ';;';
+
+    return {
+      payload,
+      title: fields.wifiSsid,
+      subtitle: fields.wifiSecurity === 'nopass'
+        ? 'Open Wi-Fi network' : 'Scan to join Wi-Fi'
+    };
+  }
+
+  // Class mode: store the link to an existing sign-up form.
+  buildClass(fields) {
+    const urlText = fields.classUrl.trim();
+    if (!urlText) return { error: 'Paste a class registration form link.' };
+    const url = this.safeUrl(urlText);
+    if (!url) return { error: 'Use a complete http:// or https:// form link.' };
+    return {
+      payload: url,
+      title: fields.classTitle.trim() || 'Class sign-up',
+      subtitle: 'Scan to open the registration form'
+    };
   }
 }
 
@@ -200,6 +207,8 @@ class QRStudioApp {
     this.qr = null;
     this.payload = '';
     this.valid = false;
+    // Each logo load gets a number. Older loads are ignored if they finish late.
+    this.logoLoadId = 0;
 
     // OBJECTS: the app uses a data builder and an image renderer.
     this.builder = new QRDataBuilder();
@@ -234,27 +243,66 @@ class QRStudioApp {
     return this.builder.build(this.mode, this.readInputs());
   }
 
+  // Read the two color inputs in one place.
+  currentColors() {
+    return {
+      foreground: this.element('foreground').value,
+      background: this.element('background').value
+    };
+  }
+
+  // Show the color codes beside the color pickers.
+  refreshColorLabels(colors) {
+    this.element('fgLabel').textContent = colors.foreground.toUpperCase();
+    this.element('bgLabel').textContent = colors.background.toUpperCase();
+  }
+
+  // Show the title and short description under the QR preview.
+  showDetails(details) {
+    this.element('previewTitle').textContent = details.title || 'Almost ready';
+    this.element('previewKind').textContent =
+      details.subtitle || 'Fill in the required fields';
+  }
+
+  // Downloads and copying are allowed only when a QR code is ready.
+  setExportButtons(available) {
+    for (const id of ['downloadPNG', 'downloadSVG', 'copyData']) {
+      this.element(id).disabled = !available;
+    }
+  }
+
+  // Draw the friendly empty box and show an error message.
+  clearPreview(message) {
+    const size = Number(this.element('qrSize').value);
+    this.renderer.showPlaceholder(this.element('qrCanvas'), size);
+    this.status(message, true);
+  }
+
+  // Warn about weak colors, or show how many modules the QR code uses.
+  showContrastStatus(colors, qr) {
+    const contrast = this.renderer.contrast(colors.foreground, colors.background);
+    if (contrast < 4.5) {
+      this.status('Low color contrast. Choose darker QR modules and a lighter background.', true);
+    } else {
+      this.status(`✓ QR code ready · ${qr.getModuleCount()} × ${qr.getModuleCount()} modules`);
+    }
+  }
+
   // Main flow: read → validate → generate → draw.
   update() {
-    const foreground = this.element('foreground').value;
-    const background = this.element('background').value;
-    this.element('fgLabel').textContent = foreground.toUpperCase();
-    this.element('bgLabel').textContent = background.toUpperCase();
+    const colors = this.currentColors();
+    this.refreshColorLabels(colors);
 
     const details = this.currentDetails();
+    this.showDetails(details);
+
+    // Forget the old QR code first, so a failed update cannot leave it usable.
     this.qr = null;
     this.valid = false;
-    for (const id of ['downloadPNG', 'downloadSVG', 'copyData']) {
-      this.element(id).disabled = Boolean(details.error);
-    }
-    this.element('previewTitle').textContent = details.title || 'Almost ready';
-    this.element('previewKind').textContent = details.subtitle || 'Fill in the required fields';
+    this.setExportButtons(false);
 
-    const size = Number(this.element('qrSize').value);
-    const canvas = this.element('qrCanvas');
     if (details.error) {
-      this.renderer.showPlaceholder(canvas, size);
-      this.status(details.error, true);
+      this.clearPreview(details.error);
       return;
     }
 
@@ -266,17 +314,14 @@ class QRStudioApp {
       qr.make();
       this.qr = qr;
       this.valid = true;
-      this.renderer.draw(canvas, size, qr, foreground, background, this.logo);
-
-      const contrast = this.renderer.contrast(foreground, background);
-      if (contrast < 4.5) {
-        this.status('Low color contrast. Choose darker QR modules and a lighter background.', true);
-      } else {
-        this.status(`✓ QR code ready · ${qr.getModuleCount()} × ${qr.getModuleCount()} modules`);
-      }
+      this.renderer.draw(this.element('qrCanvas'),
+        Number(this.element('qrSize').value),
+        qr, colors.foreground, colors.background, this.logo);
+      this.setExportButtons(true);
+      this.showContrastStatus(colors, qr);
     } catch (error) {
-      this.valid = false;
-      this.status('This text is too long for a QR code. Try a shorter URL or network name.', true);
+      this.clearPreview(
+        'This text is too long for a QR code. Try a shorter URL or network name.');
     }
   }
 
@@ -298,6 +343,10 @@ class QRStudioApp {
 
   async loadLogo(file) {
     if (!file) return;
+
+    // Remember this load's number. A newer load or a removal changes the number.
+    const loadId = ++this.logoLoadId;
+
     if (!['image/png', 'image/jpeg', 'image/webp'].includes(file.type)
         || file.size > 5 * 1024 * 1024) {
       this.status('Choose a PNG, JPG or WebP logo under 5 MB.', true);
@@ -306,25 +355,42 @@ class QRStudioApp {
     }
     const reader = new FileReader();
     reader.onload = () => {
+      if (loadId !== this.logoLoadId) return;
       const image = new Image();
       image.onload = () => {
+        if (loadId !== this.logoLoadId) return;
         this.logo = image;
         this.element('fileLabel').textContent = file.name;
         this.element('removeLogo').classList.remove('hidden');
         this.update();
       };
-      image.onerror = () => this.status('Could not read that image.', true);
+      image.onerror = () => {
+        if (loadId !== this.logoLoadId) return;
+        this.status('Could not read that image.', true);
+      };
       image.src = reader.result;
     };
     reader.readAsDataURL(file);
   }
 
-  removeLogo() {
+  // Remove the logo and ignore any image that is still loading.
+  clearLogo() {
+    this.logoLoadId++;
     this.logo = null;
     this.element('logoFile').value = '';
     this.element('fileLabel').textContent = 'No logo selected';
     this.element('removeLogo').classList.add('hidden');
+  }
+
+  removeLogo() {
+    this.clearLogo();
     this.update();
+  }
+
+  // Show or hide the Wi-Fi password without changing what the user typed.
+  setPasswordVisible(visible) {
+    this.element('wifiPassword').type = visible ? 'text' : 'password';
+    this.element('showPassword').textContent = visible ? 'Hide' : 'Show';
   }
 
   reset() {
@@ -338,10 +404,8 @@ class QRStudioApp {
     }
     this.element('wifiHidden').checked = false;
     this.element('wifiPassword').disabled = false;
-    this.logo = null;
-    this.element('logoFile').value = '';
-    this.element('fileLabel').textContent = 'No logo selected';
-    this.element('removeLogo').classList.add('hidden');
+    this.setPasswordVisible(false);
+    this.clearLogo();
     this.selectMode('link');
     this.status('Settings reset to sample link.');
   }
@@ -425,10 +489,8 @@ class QRStudioApp {
     });
 
     this.element('showPassword').addEventListener('click', () => {
-      const input = this.element('wifiPassword');
-      input.type = input.type === 'password' ? 'text' : 'password';
-      this.element('showPassword').textContent =
-        input.type === 'password' ? 'Show' : 'Hide';
+      const isHidden = this.element('wifiPassword').type === 'password';
+      this.setPasswordVisible(isHidden);
     });
 
     this.element('logoFile').addEventListener('change', event =>

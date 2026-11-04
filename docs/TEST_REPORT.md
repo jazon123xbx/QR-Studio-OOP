@@ -11,11 +11,20 @@ The OOP website was compared with the original V1 source, using a real Chromium 
 - Foreground/background color and low-contrast warning
 - Canvas image matches original V1 for all twelve data/visual test cases
 - Reset settings and active mode
+- Reset hides a Wi-Fi password that was shown and restores the Show label
+- Too-long QR data clears the old preview and disables PNG, SVG, and copy
+- A valid input turns the download buttons back on
 - PNG download, SVG download
-- Logo upload and PNG export; logo removal
+- Logo upload and PNG export; logo replacement; logo removal
+- An older, slower logo load is ignored after the logo is removed
+- The single-file standalone contains the same app classes and passes a smoke test
 - No JavaScript page errors during test
-- QR image decoded back to `https://example.com/` both without and with a logo using OpenCV QRCodeDetector
+- Previous check, not re-run in this session: QR image decoded back to `https://example.com/` both without and with a logo using OpenCV QRCodeDetector
 - Mobile-width layout screenshot generated for visual review
+
+## Browser compatibility
+
+`tests/browser_regression.py` now finds Windows Chrome/Edge or a Linux Chromium automatically. Set the `QR_BROWSER` environment variable to a browser path if detection fails. The full suite was run on Windows with both Google Chrome and Microsoft Edge.
 
 ## Testing limits
 

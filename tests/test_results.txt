@@ -1,3 +1,4 @@
+PASS standalone matches app.js
 PASS 1: link 'https://example.com'
 PASS 2: link 'https://example.org/news?a=1&b=2'
 PASS 3: link 'javascript:alert(1)'
@@ -15,4 +16,10 @@ PASS PNG download
 PASS SVG download
 PASS PNG with logo
 PASS remove logo
+PASS logo replacement and removal
+PASS outdated logo load ignored
+PASS password visibility after reset
+PASS too-long QR clears preview and disables downloads
+PASS valid input restores downloads
+PASS standalone smoke test
 PASS JavaScript: no page errors
