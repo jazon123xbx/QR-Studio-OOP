@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#f6f7fb">
+<title>QR Studio — QR codes for links, Wi-Fi and class sign-ups</title>
+<link rel="stylesheet" href="styles.css">
+
+</head>
+<body>
+<div class="shell">
+<header class="topbar"><div class="brand"><span class="brand-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none"><path d="M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3z" stroke="currentColor" stroke-width="2"/><path d="M14 14h3v3h-3zM20 14v3M14 20h3M20 20h1" stroke="currentColor" stroke-width="2"/></svg></span> QR Studio</div><span class="topnote"><span class="online-dot"></span> Private · Works offline</span></header>
+<section class="hero"><div class="eyebrow">THE SIMPLE QR MAKER</div><h1>One scan. <em>Endless possibilities.</em></h1><p>Beautiful, scannable QR codes for your links, Wi-Fi, and classroom.</p></section>
+<main class="workspace">
+<section class="panel controls" aria-label="QR code settings">
+<div class="section-head"><h2>Create your QR code</h2><span class="mini">1 of 2 · Configure</span></div>
+<div class="tabs" role="tablist" aria-label="QR type">
+<button class="tab active" data-mode="link" aria-selected="true" type="button">🔗 &nbsp; Link</button>
+<button class="tab" data-mode="wifi" aria-selected="false" type="button">📶 &nbsp; Wi-Fi</button>
+<button class="tab" data-mode="class" aria-selected="false" type="button">🎓 &nbsp; Class sign-up</button>
+</div>
+<div id="linkFields"><div class="field"><label for="linkUrl">Website or link</label><input type="url" id="linkUrl" value="https://example.com" placeholder="https://yourwebsite.com" spellcheck="false" autocomplete="off"><small>Paste any secure website, social page, document, or event link.</small></div><div class="field"><label for="linkTitle">Caption (optional)</label><input type="text" id="linkTitle" placeholder="e.g. Visit our website" maxlength="65"></div></div>
+<div id="wifiFields" class="hidden"><div class="field"><label for="wifiSsid">Wi-Fi network name (SSID)</label><input type="text" id="wifiSsid" placeholder="e.g. Classroom WiFi" maxlength="120"></div><div class="field-row"><div class="field"><label for="wifiSecurity">Security</label><select id="wifiSecurity"><option value="WPA">WPA / WPA2 / WPA3</option><option value="WEP">WEP</option><option value="nopass">No password (open)</option></select></div><div class="field"><label for="wifiPassword">Password</label><div class="toggle-eye"><input id="wifiPassword" type="password" placeholder="Wi-Fi password" maxlength="120"><button id="showPassword" type="button" aria-label="Show password">Show</button></div></div></div><label class="switch-row"><input type="checkbox" id="wifiHidden"> Hidden network</label></div>
+<div id="classFields" class="hidden"><div class="field"><label for="classTitle">Class or event name</label><input type="text" id="classTitle" placeholder="e.g. Grade 7 Science Club" maxlength="65"></div><div class="field"><label for="classUrl">Registration form URL</label><input type="url" id="classUrl" placeholder="https://forms.gle/..." spellcheck="false" autocomplete="off"><small>Use a published Google Form or another sign-up page. The QR code opens that form.</small></div></div>
+<h3 class="subhead">Make it yours</h3>
+<div class="field"><div class="field-label">Add your logo <span class="badge">Optional</span></div><div class="brand-upload"><div><div class="upload-label" id="fileLabel">No logo selected</div><div class="upload-note">PNG, JPG or WebP · Up to 5 MB</div></div><div class="upload-actions"><label for="logoFile">Upload</label><input id="logoFile" type="file" accept="image/png,image/jpeg,image/webp" class="hidden"><button id="removeLogo" class="icon-btn hidden" title="Remove logo" type="button">✕</button></div></div><small class="mini" style="display:block;margin-top:8px">Logo is placed on a white badge in the center. Test scanning before printing.</small></div>
+<div class="field color-row"><div><div class="field-label">QR color</div><div class="color-control"><input id="foreground" type="color" value="#1a1a32" aria-label="QR color"><div><strong>Foreground</strong><span id="fgLabel">#1A1A32</span></div></div></div><div><div class="field-label">Background</div><div class="color-control"><input id="background" type="color" value="#ffffff" aria-label="Background color"><div><strong>Canvas</strong><span id="bgLabel">#FFFFFF</span></div></div></div></div>
+<div class="field"><label for="qrSize">Image resolution</label><select id="qrSize"><option value="320">320 × 320</option><option value="512" selected>512 × 512 — recommended</option><option value="768">768 × 768</option><option value="1024">1024 × 1024</option></select></div>
+<div class="section-head" style="margin:14px 0 0"><span class="mini">100% browser-based · No sign-in required</span><button class="icon-btn" id="reset" type="button">↺ Reset</button></div>
+</section>
+<section class="panel preview" aria-label="QR code result"><div class="preview-head"><h2>Your QR code</h2><span class="badge" id="modeBadge">LINK</span></div><div class="preview-wrap"><canvas id="qrCanvas" width="512" height="512" aria-label="Generated QR code" role="img"></canvas></div><div class="preview-title" id="previewTitle">Your website</div><div class="preview-kind" id="previewKind">https://example.com</div><div class="buttons"><button type="button" id="downloadPNG" class="btn btn-primary">↓ Download PNG</button><button type="button" id="downloadSVG" class="btn">↓ Download SVG</button><button type="button" id="copyData" class="btn span-2">⧉ Copy QR destination</button></div><div class="status" id="status" role="status" aria-live="polite"></div><div class="hintbox"><strong>Quick tip:</strong> Leave a clear white border around your code, use dark-on-light colors, and scan-test it on another phone—especially with a logo.</div></section>
+</main><footer class="footer">QR Studio • QR codes are created locally on your device. No passwords or logos are uploaded.</footer>
+</div>
+<script defer src="js/qr-core.js"></script>
+<script defer src="js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,18 @@
+PASS 1: link 'https://example.com'
+PASS 2: link 'https://example.org/news?a=1&b=2'
+PASS 3: link 'javascript:alert(1)'
+PASS 4: link 'not-a-website'
+PASS 5: link ''
+PASS 6: class 'https://forms.gle/example?x=2'
+PASS 7: class ''
+PASS 8: wifi 'Room 101'
+PASS 9: wifi 'Public Classroom'
+PASS 10: wifi ''
+PASS 11: wifi 'Room 102'
+PASS 12: link 'https://example.com'
+PASS reset
+PASS PNG download
+PASS SVG download
+PASS PNG with logo
+PASS remove logo
+PASS JavaScript: no page errors
